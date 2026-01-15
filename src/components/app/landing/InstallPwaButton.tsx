@@ -61,16 +61,16 @@ export function InstallPwaButton() {
             }
         } else if (platform === 'ios') {
             alert("To install Fenrir on your iPhone:\n1. Tap the 'Share' icon (bottom center).\n2. Scroll down and tap 'Add to Home Screen'.");
+        } else if (platform === 'desktop') {
+            alert("To install Fenrir on Desktop:\n1. Use Chrome or Edge browser.\n2. Look for the 'Install' icon in the address bar (top right).");
+        } else {
+            alert("To install Fenrir:\n1. Use Chrome/Edge/Safari.\n2. Add to Home Screen from the browser menu.");
         }
     };
 
     if (isStandalone) return null;
 
-    // Logic: 
-    // 1. If we have a prompt (Android/Desktop), show button.
-    // 2. If we are on iOS (no prompt possible), show button for manual instructions.
-    // 3. Otherwise (Desktop/Android with NO prompt - likely already installed or blocked), HIDE button.
-    if (!deferredPrompt && platform !== 'ios') return null;
+    // Always show button (Force Show)
 
     return (
         <Button
