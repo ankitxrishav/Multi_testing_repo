@@ -65,6 +65,22 @@ export function useTimer() {
     return () => unsubscribe();
   }, [user, firestore]);
 
+  // 1.5 Fetch Subjects for Notification Name
+  const [subjects, setSubjects] = useState<any[]>([]);
+  useEffect(() => {
+    if (!user || !firestore) return;
+    const q = query(collection(firestore, 'subjects'), where('userId', '==', user.uid));
+    const unsub = onSnapshot(q, (snapshot) => {
+      setSubjects(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
+    });
+    return () => unsub();
+  }, [user, firestore]);
+
+  const subjectsRef = useRef<any[]>([]);
+  useEffect(() => {
+    subjectsRef.current = subjects;
+  }, [subjects]);
+
   // 2. Tick Logic
   const tick = useCallback(() => {
     if (!timerState) return;
@@ -72,6 +88,11 @@ export function useTimer() {
     if (timerState.status === 'running' && timerState.startTime) {
       const now = Date.now();
       const elapsed = (now - timerState.startTime) / 1000;
+
+      // Resolve Subject Name
+      const subjectName = timerState.subjectId
+        ? (subjectsRef.current.find(s => s.id === timerState.subjectId)?.name || 'Study Session')
+        : 'Focus Session';
 
       if (timerState.mode === 'pomodoro') {
         const remaining = Math.max(0, timerState.duration - elapsed);
@@ -86,8 +107,8 @@ export function useTimer() {
           navigator.serviceWorker.controller.postMessage({
             type: 'TICK',
             payload: {
-              title: 'Focus Session',
-              body: `${timeString} remaining • Studying`,
+              title: subjectName,
+              body: `${timeString} remaining`,
               icon: '/icon-192.png'
             }
           });
@@ -104,7 +125,7 @@ export function useTimer() {
           navigator.serviceWorker.controller.postMessage({
             type: 'TICK',
             payload: {
-              title: 'Stopwatch',
+              title: subjectName,
               body: `${timeString} elapsed`,
               icon: '/icon-192.png'
             }
