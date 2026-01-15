@@ -1,0 +1,12 @@
+/* content.css */
+#fenrir-floating-timer {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+.fenrir-timer-glass {
+    transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.fenrir-timer-glass:hover {
+    transform: scale(1.02);
+}

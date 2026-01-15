@@ -76,8 +76,40 @@ export function useTimer() {
       if (timerState.mode === 'pomodoro') {
         const remaining = Math.max(0, timerState.duration - elapsed);
         setDisplayTime(remaining);
+
+        // Sync Notification
+        if (typeof navigator !== 'undefined' && navigator.serviceWorker?.controller) {
+          const minutes = Math.floor(remaining / 60);
+          const seconds = Math.floor(remaining % 60);
+          const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+          navigator.serviceWorker.controller.postMessage({
+            type: 'TICK',
+            payload: {
+              title: 'Focus Session',
+              body: `${timeString} remaining • Studying`,
+              icon: '/icon-192.png'
+            }
+          });
+        }
       } else {
         setDisplayTime(elapsed);
+
+        // Sync Notification
+        if (typeof navigator !== 'undefined' && navigator.serviceWorker?.controller) {
+          const minutes = Math.floor(elapsed / 60);
+          const seconds = Math.floor(elapsed % 60);
+          const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+          navigator.serviceWorker.controller.postMessage({
+            type: 'TICK',
+            payload: {
+              title: 'Stopwatch',
+              body: `${timeString} elapsed`,
+              icon: '/icon-192.png'
+            }
+          });
+        }
       }
     } else if (timerState.status === 'paused' && timerState.timeLeftAtPause !== null) {
       setDisplayTime(timerState.timeLeftAtPause);
@@ -85,6 +117,11 @@ export function useTimer() {
       // Stopped/Idle
       // If we are stopped, show the 'planned' duration (local or stored)
       setDisplayTime(timerState.mode === 'pomodoro' ? timerState.duration : 0);
+
+      // Clear notification if stopped
+      if (typeof navigator !== 'undefined' && navigator.serviceWorker?.controller && timerState.status === 'stopped') {
+        navigator.serviceWorker.controller.postMessage({ type: 'STOP_TIMER' });
+      }
     }
   }, [timerState]);
 
@@ -100,6 +137,10 @@ export function useTimer() {
   // 3. Actions
   const start = async () => {
     if (!user || !firestore) return;
+
+    if ('Notification' in window && Notification.permission === 'default') {
+      await Notification.requestPermission();
+    }
 
     // If starting from idle
     const startTime = Date.now();

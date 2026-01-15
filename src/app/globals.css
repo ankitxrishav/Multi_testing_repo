@@ -134,4 +134,20 @@
   .dark .drop-shadow-glow {
     filter: drop-shadow(0 0 12px rgba(139, 92, 246, 0.5));
   }
+
+  .no-scroll {
+    overflow: hidden !important;
+    height: 100vh !important;
+    width: 100vw !important;
+    position: fixed !important;
+  }
+
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
 }

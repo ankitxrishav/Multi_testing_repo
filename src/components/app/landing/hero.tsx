@@ -2,7 +2,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Chrome, Download } from 'lucide-react';
-import { InstallPwaButton } from './install-pwa-button';
+import { InstallPwaButton } from '@/components/app/landing/InstallPwaButton';
 
 const ChromeIcon = Chrome; // Alias if needed or just use Chrome directly
 

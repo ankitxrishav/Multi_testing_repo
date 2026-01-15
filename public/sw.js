@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fenrir-study-v1';
+const CACHE_NAME = 'fenrir-study-v2';
 const urlsToCache = [
     '/',
     '/manifest.json',
@@ -30,7 +30,6 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-    // Network first, fall back to cache for document requests, cache first for static assets
     if (event.request.mode === 'navigate') {
         event.respondWith(
             fetch(event.request).catch(() => caches.match(event.request))
@@ -47,23 +46,35 @@ self.addEventListener('fetch', (event) => {
 // Timer Notification Logic
 self.addEventListener('message', (event) => {
     if (event.data && event.data.type === 'TICK') {
-        // We can trigger notifications here if needed, but 'TICK' usually comes from the client.
-        // For persistent notifications, we might update an existing notification
         const { title, body, icon } = event.data.payload;
+
+        // Show/Update persistent notification
         self.registration.showNotification(title, {
             body,
             icon: icon || '/icon-192.png',
-            tag: 'fenrir-timer', // Replaces existing notification with same tag
-            silent: true, // Don't beep on every minute update
-            renotify: false
+            tag: 'fenrir-timer', // Identifies this notification to replace it
+            silent: true,      // Don't beep on every tick
+            renotify: false,   // Don't vibrate on every tick
+            badge: '/icon-192.png',
+            vibrate: [],
+            data: { url: '/' }
         });
-    } else if (event.data && event.data.type === 'COMPLETE') {
-        self.registration.showNotification("Session Complete", {
-            body: event.data.payload.body,
-            icon: '/icon-192.png',
-            tag: 'fenrir-timer',
-            vibrate: [200, 100, 200],
-            requireInteraction: true
+    } else if (event.data && event.data.type === 'STOP_TIMER') {
+        // Close the notification
+        self.registration.getNotifications({ tag: 'fenrir-timer' }).then((notifications) => {
+            notifications.forEach(notification => notification.close());
         });
     }
+});
+
+self.addEventListener('notificationclick', (event) => {
+    event.notification.close();
+    event.waitUntil(
+        clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+            if (clientList.length > 0) {
+                return clientList[0].focus();
+            }
+            return clients.openWindow('/');
+        })
+    );
 });
