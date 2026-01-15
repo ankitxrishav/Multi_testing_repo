@@ -31,15 +31,24 @@ export function InstallPwaButton() {
         };
         checkStandalone();
 
+        // 1. Check Global Cache
+        if ((window as any).deferredPrompt) {
+            setDeferredPrompt((window as any).deferredPrompt);
+            console.log('Reused Global PWA Prompt');
+        }
+
+        // 2. Listen for new events
         const handler = (e: any) => {
             e.preventDefault();
             setDeferredPrompt(e);
-            console.log('PWA Install Prompt Captured');
+            (window as any).deferredPrompt = e; // Sync global
+            console.log('Component PWA Prompt Captured');
         };
 
         const installedHandler = () => {
             setIsStandalone(true);
             setDeferredPrompt(null);
+            (window as any).deferredPrompt = null;
             console.log('PWA Installed Successfully');
         };
 
