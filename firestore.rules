@@ -19,6 +19,11 @@ service cloud.firestore {
     match /users/{userId} {
       allow create, get, update, delete: if isOwner(userId);
       allow list: if false;
+
+      // Allow access to timer subcollection
+      match /timer/{timerId} {
+        allow read, write: if isOwner(userId);
+      }
     }
 
     /* =========================

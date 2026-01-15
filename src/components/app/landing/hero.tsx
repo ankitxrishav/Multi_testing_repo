@@ -1,12 +1,22 @@
 "use client";
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Chrome, Download } from 'lucide-react';
+import { Chrome, Download, AlertCircle, FileArchive, Settings, FolderInput } from 'lucide-react';
 import { InstallPwaButton } from '@/components/app/landing/InstallPwaButton';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { useState } from 'react';
 
 const ChromeIcon = Chrome; // Alias if needed or just use Chrome directly
 
 export function Hero() {
+    const [showExtensionGuide, setShowExtensionGuide] = useState(false);
+
+    const handleExtensionDownload = (e: React.MouseEvent) => {
+        // Allow download to proceed
+        // Show guide immediately
+        setShowExtensionGuide(true);
+    };
+
     return (
         <section className="relative min-h-[90vh] flex flex-col items-center justify-center pt-20 px-4 overflow-hidden">
             <div className="container max-w-6xl mx-auto text-center z-10">
@@ -42,13 +52,58 @@ export function Hero() {
                     <a
                         href="/fenrir-extension.zip"
                         download
-                        className="glass px-8 py-4 rounded-2xl border-white/10 hover:bg-white/5 hover:border-brand-purple/50 text-white font-bold transition-all flex items-center gap-3 group"
+                        onClick={handleExtensionDownload}
+                        className="glass px-8 py-4 rounded-2xl border-white/10 hover:bg-white/5 hover:border-brand-purple/50 text-white font-bold transition-all flex items-center gap-3 group cursor-pointer"
                     >
                         <span className="bg-brand-purple/20 p-2 rounded-lg group-hover:bg-brand-purple/40 transition-colors">
                             <ChromeIcon className="w-5 h-5 text-brand-purple" />
                         </span>
                         Download Extension
                     </a>
+
+                    <Dialog open={showExtensionGuide} onOpenChange={setShowExtensionGuide}>
+                        <DialogContent className="glass-elevated border-white/10 text-white sm:max-w-md">
+                            <DialogHeader>
+                                <DialogTitle className="text-xl font-display font-bold flex items-center gap-2">
+                                    <AlertCircle className="w-5 h-5 text-brand-purple" />
+                                    One-Time Setup Required
+                                </DialogTitle>
+                                <DialogDescription className="text-slate-400">
+                                    Due to browser security, developer extensions must be loaded manually.
+                                </DialogDescription>
+                            </DialogHeader>
+                            <div className="space-y-4 py-4">
+                                <div className="flex gap-4 items-start">
+                                    <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center shrink-0 font-bold text-sm">1</div>
+                                    <div className="space-y-1">
+                                        <p className="font-bold text-sm">Unzip the Downloaded File</p>
+                                        <p className="text-xs text-slate-400">Extract <span className="text-brand-purple font-mono">fenrir-extension.zip</span> to a folder.</p>
+                                    </div>
+                                </div>
+                                <div className="flex gap-4 items-start">
+                                    <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center shrink-0 font-bold text-sm">2</div>
+                                    <div className="space-y-1">
+                                        <p className="font-bold text-sm">Open Extensions Page</p>
+                                        <p className="text-xs text-slate-400">Go to <span className="text-brand-purple font-mono bg-white/5 px-1 rounded">chrome://extensions</span> in a new tab.</p>
+                                    </div>
+                                </div>
+                                <div className="flex gap-4 items-start">
+                                    <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center shrink-0 font-bold text-sm">3</div>
+                                    <div className="space-y-1">
+                                        <p className="font-bold text-sm">Enable Developer Mode</p>
+                                        <p className="text-xs text-slate-400">Toggle the switch in the top right corner.</p>
+                                    </div>
+                                </div>
+                                <div className="flex gap-4 items-start">
+                                    <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center shrink-0 font-bold text-sm">4</div>
+                                    <div className="space-y-1">
+                                        <p className="font-bold text-sm">Load Unpacked</p>
+                                        <p className="text-xs text-slate-400">Click "Load Unpacked" button and select your unzipped folder.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </DialogContent>
+                    </Dialog>
                 </motion.div>
 
                 <motion.div

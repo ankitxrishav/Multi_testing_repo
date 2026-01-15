@@ -25,8 +25,11 @@ export function InstallPwaButton() {
         }
 
         // Check Standalone
-        const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (navigator as any).standalone;
-        setIsStandalone(!!isStandalone);
+        const checkStandalone = () => {
+            const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (navigator as any).standalone;
+            setIsStandalone(!!isStandalone);
+        };
+        checkStandalone();
 
         const handler = (e: any) => {
             e.preventDefault();
@@ -34,9 +37,19 @@ export function InstallPwaButton() {
             console.log('PWA Install Prompt Captured');
         };
 
-        window.addEventListener('beforeinstallprompt', handler);
+        const installedHandler = () => {
+            setIsStandalone(true);
+            setDeferredPrompt(null);
+            console.log('PWA Installed Successfully');
+        };
 
-        return () => window.removeEventListener('beforeinstallprompt', handler);
+        window.addEventListener('beforeinstallprompt', handler);
+        window.addEventListener('appinstalled', installedHandler);
+
+        return () => {
+            window.removeEventListener('beforeinstallprompt', handler);
+            window.removeEventListener('appinstalled', installedHandler);
+        };
     }, []);
 
     const handleInstall = async () => {
@@ -48,14 +61,16 @@ export function InstallPwaButton() {
             }
         } else if (platform === 'ios') {
             alert("To install Fenrir on your iPhone:\n1. Tap the 'Share' icon (bottom center).\n2. Scroll down and tap 'Add to Home Screen'.");
-        } else if (platform === 'desktop') {
-            alert("To install Fenrir on Desktop:\n1. Use Chrome or Edge browser.\n2. Look for the 'Install' icon in the address bar (top right).");
-        } else {
-            alert("Please use a modern browser (Chrome/Edge/Safari) to install Fenrir Study.");
         }
     };
 
     if (isStandalone) return null;
+
+    // Logic: 
+    // 1. If we have a prompt (Android/Desktop), show button.
+    // 2. If we are on iOS (no prompt possible), show button for manual instructions.
+    // 3. Otherwise (Desktop/Android with NO prompt - likely already installed or blocked), HIDE button.
+    if (!deferredPrompt && platform !== 'ios') return null;
 
     return (
         <Button
