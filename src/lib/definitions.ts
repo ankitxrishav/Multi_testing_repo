@@ -7,6 +7,7 @@ export type Subject = {
   color: string;
   priority?: 'low' | 'medium' | 'high';
   archived: boolean;
+  archivedAt?: string; // ISO string when archived
   createdAt: string; // ISO string
 };
 
@@ -39,6 +40,7 @@ export type UserSettings = {
   sessionEndAlert: boolean;
   breakReminder: boolean;
   studyTargetHours: number; // New: Daily study goal (1-12)
+  timerFace?: 'cosmic' | 'minimalist' | 'geometric';
 };
 
 export type User = {
@@ -55,17 +57,16 @@ export type User = {
 
 // Represents the state of a user's timer, stored in Firestore
 export type TimerState = {
-  userId: string;
   status: 'running' | 'paused' | 'stopped';
   mode: 'pomodoro' | 'stopwatch';
-  subjectId: string;
-  // The server timestamp when the timer was last started/resumed
-  startedAt: any;
-  // The server timestamp of the absolute beginning of the session
-  sessionStartTime: any;
-  // Duration in seconds for pomodoro mode
-  initialDuration: number;
-  // Total time in milliseconds the timer has run before the current 'running' phase
-  accumulatedTime: number;
+  subjectId: string | null;
+  // Unix timestamp when the timer started running (adjusted for pauses)
+  startTime: number | null;
+  // Total planned duration in seconds
+  duration: number;
+  // Unix timestamp when paused
+  pausedAt: number | null;
+  // Snapshot of remaining time (or elapsed) when paused
+  timeLeftAtPause: number | null;
 }
 

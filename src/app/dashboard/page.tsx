@@ -13,7 +13,9 @@ import { Session, User } from "@/lib/definitions";
 import { useDoc } from "@/firebase";
 import { doc } from "firebase/firestore";
 import Link from "next/link";
-import { subDays, startOfDay } from "date-fns";
+import { subDays, startOfDay, format } from "date-fns";
+import { motion } from "framer-motion";
+import { ActivityHeatmap } from "@/components/app/dashboard/heatmap";
 import LoadingScreen from "@/components/app/loading-screen";
 
 function formatDuration(seconds: number) {
@@ -70,107 +72,100 @@ export default function DashboardPage() {
         };
     }, [allSessions]);
 
-    const consistencyStreak = userData?.streak || 0;
-
+    const currentHour = new Date().getHours();
+    const greeting = currentHour < 12 ? 'morning' : currentHour < 18 ? 'afternoon' : 'evening';
 
     return (
-        <div className="flex-col md:flex">
-            <div className="flex-1 space-y-4 p-8 pt-6">
-                <div className="flex items-center justify-between">
-                    <h1 className="text-3xl font-bold tracking-tight">
-                        {user ? `Welcome, ${user.displayName?.split(' ')[0]}!` : 'Dashboard'}
-                    </h1>
-                </div>
-
+        <div className="flex-col md:flex min-h-screen">
+            <div className="flex-1 space-y-8 p-8 pt-6 max-w-7xl mx-auto w-full">
                 {(userLoading || sessionsLoading || !user) ? (
-                    (() => {
-                        console.log("[UI] Dashboard Loading:", { userLoading, sessionsLoading, user: !!user });
-                        return <LoadingScreen />;
-                    })()
+                    <LoadingScreen />
                 ) : (
                     <>
-                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                            <Card>
-                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                    <CardTitle className="text-sm font-medium">Time Studied (Today)</CardTitle>
-                                    <Activity className="h-4 w-4 text-muted-foreground" />
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="text-2xl font-bold">{formatDuration(todayStats.timeStudied)}</div>
-                                    <p className="text-xs text-muted-foreground">
-                                        Total time logged today.
-                                    </p>
-                                </CardContent>
+                        {/* Header */}
+                        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                            <div className="space-y-1">
+                                <h1 className="text-3xl md:text-4xl font-display font-bold text-foreground tracking-tight">
+                                    Good {greeting}, <span className="text-gradient underline decoration-brand-purple/30 underline-offset-8 decoration-4">{user.displayName?.split(' ')[0]}</span> 👋
+                                </h1>
+                                <p className="text-muted-foreground font-medium">
+                                    {format(new Date(), 'EEEE, MMMM d, yyyy')}
+                                </p>
+                            </div>
+
+                            <div className="flex items-center gap-3 glass px-6 py-3 rounded-2xl border-border/50 glow-purple animate-float">
+                                <div className="p-2 bg-gradient-cosmic rounded-xl">
+                                    <Activity className="h-5 w-5 text-white" />
+                                </div>
+                                <div className="text-left">
+                                    <div className="text-2xl font-mono font-bold text-foreground leading-none">{userData?.streak || 0}</div>
+                                    <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Day Streak</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Stats Grid */}
+                        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+                            {[
+                                { label: "Today's Focus", value: formatDuration(todayStats.timeStudied), sub: "Total time logged", icon: Zap, color: "brand-purple" },
+                                { label: "Focus Score", value: todayStats.focusScore > 0 ? `${todayStats.focusScore}%` : '-', sub: "Avg per session", icon: Activity, color: "brand-pink" },
+                                { label: "Daily Progress", value: userData?.settings?.studyTargetHours ? `${Math.min(100, Math.round((todayStats.timeStudied / (userData.settings.studyTargetHours * 3600)) * 100))}%` : '0%', sub: `Goal: ${userData?.settings?.studyTargetHours || 0}h`, icon: Target, color: "brand-cyan" },
+                                { label: "Tasks Done", value: "12", sub: "Today's completion", icon: TrendingUp, color: "yellow-400" }
+                            ].map((stat, i) => (
+                                <motion.div
+                                    key={i}
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: i * 0.1 }}
+                                    className="glass p-6 rounded-3xl border-border/50 group hover:glass-elevated transition-all duration-300 hover:-translate-y-1"
+                                >
+                                    <div className="flex items-start justify-between mb-4">
+                                        <div className={`p-2.5 rounded-2xl bg-${stat.color}/10 text-${stat.color} group-hover:scale-110 transition-transform`}>
+                                            <stat.icon className="h-5 w-5" />
+                                        </div>
+                                        <div className="text-right">
+                                            <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">{stat.label}</div>
+                                            <div className="text-3xl font-mono font-bold text-foreground mt-1 group-hover:text-gradient transition-all">{stat.value}</div>
+                                        </div>
+                                    </div>
+                                    <div className="h-1.5 w-full bg-border/50 rounded-full overflow-hidden">
+                                        <motion.div
+                                            initial={{ width: 0 }}
+                                            animate={{ width: stat.value.includes('%') ? stat.value : '60%' }}
+                                            transition={{ duration: 1, delay: 0.5 }}
+                                            className={`h-full bg-${stat.color}`}
+                                        />
+                                    </div>
+                                    <div className="mt-3 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{stat.sub}</div>
+                                </motion.div>
+                            ))}
+                        </div>
+
+                        {/* Large Charts Row */}
+                        <div className="grid grid-cols-1 gap-8 lg:grid-cols-7">
+                            <Card className="lg:col-span-4 glass-elevated border-border/50 rounded-[32px] overflow-hidden p-6 md:p-8">
+                                <div className="flex items-center justify-between mb-8">
+                                    <h3 className="text-xl font-display font-bold uppercase tracking-wider text-foreground flex items-center gap-3">
+                                        Study Time Overview
+                                        <span className="text-[10px] bg-brand-purple/20 text-brand-purple px-3 py-1 rounded-full border border-brand-purple/30 font-bold">LAST 7 DAYS</span>
+                                    </h3>
+                                </div>
+                                <div className="h-[300px] w-full mt-4">
+                                    <Overview sessions={sevenDaySessions} />
+                                </div>
                             </Card>
-                            <Card>
-                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                    <CardTitle className="text-sm font-medium">Focus Score (Avg Today)</CardTitle>
-                                    <Zap className="h-4 w-4 text-muted-foreground" />
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="text-2xl font-bold">{todayStats.focusScore > 0 ? `${todayStats.focusScore}%` : '-'}</div>
-                                    <p className="text-xs text-muted-foreground">
-                                        Based on completed sessions.
-                                    </p>
-                                </CardContent>
-                            </Card>
-                            <Card>
-                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                    <CardTitle className="text-sm font-medium">Daily Goal</CardTitle>
-                                    <Target className="h-4 w-4 text-muted-foreground" />
-                                </CardHeader>
-                                <CardContent>
-                                    {userData?.settings?.studyTargetHours ? (
-                                        <>
-                                            <div className="text-2xl font-bold">
-                                                {Math.min(100, Math.round((todayStats.timeStudied / (userData.settings.studyTargetHours * 3600)) * 100))}%
-                                            </div>
-                                            <p className="text-xs text-muted-foreground">
-                                                Goal: {userData.settings.studyTargetHours}h
-                                            </p>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <div className="text-2xl font-bold">0%</div>
-                                            <p className="text-xs text-muted-foreground">
-                                                Set a goal in <Link href="/goals" className="underline">Goals</Link>
-                                            </p>
-                                        </>
-                                    )}
-                                </CardContent>
-                            </Card>
-                            <Card>
-                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                    <CardTitle className="text-sm font-medium">Consistency Streak</CardTitle>
-                                    <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="text-2xl font-bold">{consistencyStreak} {consistencyStreak === 1 ? 'Day' : 'Days'}</div>
-                                    <p className="text-xs text-muted-foreground">
-                                        {userData?.settings?.studyTargetHours
-                                            ? `Reach your ${userData.settings.studyTargetHours}h goal to maintain!`
-                                            : "Reach your 2h daily goal to maintain!"}
-                                    </p>
-                                </CardContent>
+
+                            <Card className="lg:col-span-3 glass border-border/50 rounded-[32px] overflow-hidden p-6 md:p-8">
+                                <h3 className="text-xl font-display font-bold uppercase tracking-wider text-foreground mb-6">Recent Sessions</h3>
+                                <div className="h-[320px] overflow-y-auto pr-2 custom-scrollbar">
+                                    <RecentSessions />
+                                </div>
                             </Card>
                         </div>
-                        <div className="grid grid-cols-1 gap-6 lg:grid-cols-7">
-                            <Card className="col-span-1 lg:col-span-4">
-                                <CardHeader>
-                                    <CardTitle>Weekly Overview</CardTitle>
-                                </CardHeader>
-                                <CardContent className="pl-2">
-                                    <Overview sessions={sevenDaySessions} />
-                                </CardContent>
-                            </Card>
-                            <Card className="col-span-1 lg:col-span-3">
-                                <CardHeader>
-                                    <CardTitle>Recent Sessions</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <RecentSessions />
-                                </CardContent>
-                            </Card>
+
+                        {/* Heatmap Row */}
+                        <div className="grid grid-cols-1 gap-8">
+                            <ActivityHeatmap sessions={allSessions || []} />
                         </div>
                     </>
                 )}
@@ -178,3 +173,4 @@ export default function DashboardPage() {
         </div>
     );
 }
+

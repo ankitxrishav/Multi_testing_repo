@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,8 +23,6 @@ export default function GoalsPage() {
     const { user, loading: userLoading } = useUser();
     const firestore = useFirestore();
     const { toast } = useToast();
-
-    const today = useMemo(() => format(new Date(), 'yyyy-MM-dd'), []);
 
     // Fetch User Doc for settings and streak
     const userDocRef = useMemo(() => (user && firestore ? doc(firestore, 'users', user.uid) : null), [user, firestore]);
@@ -47,7 +46,7 @@ export default function GoalsPage() {
             .reduce((acc, s) => acc + s.duration, 0);
     }, [allSessions]);
 
-    const [studyTarget, setStudyTarget] = useState(1);
+    const [studyTarget, setStudyTarget] = useState(2);
     const [isSaving, setIsSaving] = useState(false);
 
     useEffect(() => {
@@ -74,78 +73,119 @@ export default function GoalsPage() {
     const studyProgress = Math.min(100, (todayStudySeconds / (studyTarget * 3600)) * 100);
 
     return (
-        <div className="container max-w-4xl py-10 space-y-8">
-            <div className="flex flex-col gap-2">
-                <h1 className="text-3xl font-bold tracking-tight">Daily Goals</h1>
-                <p className="text-muted-foreground">Set your daily study target and track your streak.</p>
-            </div>
-
+        <div className="min-h-screen p-8 max-w-5xl mx-auto space-y-12">
             {(userLoading || docLoading || !user) ? (
                 <LoadingScreen />
             ) : (
                 <>
-                    <div className="grid gap-6 md:grid-cols-2">
+                    <div className="space-y-2">
+                        <h1 className="text-4xl md:text-5xl font-display font-bold text-white tracking-tight">
+                            YOUR <span className="text-gradient">STUDY GOALS</span>
+                        </h1>
+                        <p className="text-slate-500 font-medium">Configure your daily targets and build long-term consistency.</p>
+                    </div>
+
+                    <div className="grid gap-8 md:grid-cols-5">
                         {/* Study Target Section */}
-                        <Card className="border-t-4 border-t-orange-500">
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <Target className="h-5 w-5 text-orange-500" />
-                                    Daily Study Goal
-                                </CardTitle>
-                                <CardDescription>Aim for 1 to 12 hours of focused study.</CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-6">
-                                <div className="space-y-4">
-                                    <div className="flex justify-between items-center text-sm font-medium">
-                                        <span>Target: {studyTarget} {studyTarget === 1 ? 'hour' : 'hours'}</span>
-                                        <span className="text-muted-foreground">{Math.round(todayStudySeconds / 60)}m logged today</span>
-                                    </div>
-                                    <Slider
-                                        value={[studyTarget]}
-                                        onValueChange={(val) => setStudyTarget(val[0])}
-                                        min={1}
-                                        max={12}
-                                        step={0.5}
-                                        className="py-4"
-                                    />
-                                    <div className="space-y-2">
-                                        <div className="flex justify-between text-xs text-muted-foreground">
-                                            <span>Progress</span>
-                                            <span>{Math.round(studyProgress)}%</span>
+                        <motion.div
+                            className="md:col-span-3"
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                        >
+                            <Card className="glass-elevated border-white/5 rounded-[32px] overflow-hidden p-8 flex flex-col h-full">
+                                <CardHeader className="p-0 mb-8">
+                                    <div className="flex items-center gap-4 mb-2">
+                                        <div className="p-3 bg-brand-purple/20 text-brand-purple rounded-2xl">
+                                            <Target className="h-6 w-6" />
                                         </div>
-                                        <div className="h-2 w-full bg-secondary rounded-full overflow-hidden">
-                                            <div
-                                                className="h-full bg-orange-500 transition-all duration-500"
-                                                style={{ width: `${studyProgress}%` }}
+                                        <div>
+                                            <CardTitle className="text-2xl font-display font-bold text-white uppercase tracking-wider">DAILY TARGET</CardTitle>
+                                            <CardDescription className="text-slate-500 font-medium font-sans">Set a goal between 2 and 18 hours.</CardDescription>
+                                        </div>
+                                    </div>
+                                </CardHeader>
+                                <CardContent className="p-0 space-y-10 flex-1">
+                                    <div className="space-y-6">
+                                        <div className="flex justify-between items-end">
+                                            <div className="space-y-1">
+                                                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Current Goal</span>
+                                                <div className="text-5xl font-mono font-bold text-white">
+                                                    {studyTarget} <span className="text-xl text-brand-purple">HRS</span>
+                                                </div>
+                                            </div>
+                                            <div className="text-right">
+                                                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Logged Today</span>
+                                                <div className="text-2xl font-mono font-bold text-slate-300">{Math.round(todayStudySeconds / 60)} <span className="text-xs">MIN</span></div>
+                                            </div>
+                                        </div>
+
+                                        <div className="py-4">
+                                            <Slider
+                                                value={[studyTarget]}
+                                                onValueChange={(val) => setStudyTarget(val[0])}
+                                                min={2}
+                                                max={18}
+                                                step={0.5}
+                                                className="relative flex items-center select-none touch-none w-full h-5"
                                             />
+                                            <div className="flex justify-between mt-4 text-[10px] font-bold text-slate-600 uppercase tracking-widest">
+                                                <span>2 HRS</span>
+                                                <span>18 HRS</span>
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-4 pt-4">
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Progress to Goal</span>
+                                                <span className="text-sm font-mono font-bold text-brand-purple">{Math.round(studyProgress)}%</span>
+                                            </div>
+                                            <div className="h-2.5 w-full bg-white/5 rounded-full overflow-hidden border border-white/5 p-[1px]">
+                                                <motion.div
+                                                    className="h-full bg-gradient-cosmic rounded-full shadow-[0_0_15px_rgba(139,92,246,0.5)]"
+                                                    initial={{ width: 0 }}
+                                                    animate={{ width: `${studyProgress}%` }}
+                                                    transition={{ duration: 1, ease: "easeOut" }}
+                                                />
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            </CardContent>
-                            <CardFooter>
-                                <Button onClick={handleSaveTarget} disabled={isSaving} className="w-full">
-                                    {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                    Set Target
-                                </Button>
-                            </CardFooter>
-                        </Card>
+                                </CardContent>
+                                <CardFooter className="p-0 mt-10">
+                                    <Button
+                                        onClick={handleSaveTarget}
+                                        disabled={isSaving}
+                                        className="w-full h-14 rounded-2xl bg-gradient-cosmic hover:glow-purple text-lg font-bold transition-all duration-500 group"
+                                    >
+                                        {isSaving ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : "UPDATE GOAL"}
+                                    </Button>
+                                </CardFooter>
+                            </Card>
+                        </motion.div>
 
                         {/* Streak Card */}
-                        <Card className="border-t-4 border-t-yellow-500 flex flex-col justify-center text-center">
-                            <CardContent className="pt-6">
-                                <div className="inline-flex items-center justify-center p-4 rounded-full bg-yellow-100 dark:bg-yellow-900/30 mb-4">
-                                    <Flame className="h-10 w-10 text-yellow-600" />
-                                </div>
-                                <div className="text-4xl font-bold mb-1">{userData?.streak || 0}</div>
-                                <div className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Day Streak</div>
-                                <p className="mt-4 text-xs text-muted-foreground">
-                                    Maintain your study target daily to grow your streak!
-                                </p>
-                            </CardContent>
-                        </Card>
+                        <motion.div
+                            className="md:col-span-2"
+                            initial={{ opacity: 0, x: 20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: 0.2 }}
+                        >
+                            <Card className="glass border-white/5 rounded-[32px] overflow-hidden p-8 flex flex-col justify-center text-center h-full group hover:glass-elevated transition-colors duration-500">
+                                <CardContent className="p-0">
+                                    <div className="inline-flex items-center justify-center p-6 rounded-[32px] bg-brand-purple/10 text-brand-purple mb-8 group-hover:glow-purple transition-all duration-500 animate-float">
+                                        <Flame className="h-16 w-16 fill-current" />
+                                    </div>
+                                    <div className="text-7xl font-mono font-bold text-white mb-2 leading-none">{userData?.streak || 0}</div>
+                                    <div className="text-sm font-bold text-slate-500 uppercase tracking-[0.3em]">Day Streak</div>
+                                    <p className="mt-8 text-sm text-slate-400 font-medium leading-relaxed italic opacity-60">
+                                        "Discipline is the bridge between goals and accomplishment."
+                                    </p>
+                                </CardContent>
+                            </Card>
+                        </motion.div>
                     </div>
                 </>
             )}
         </div>
     );
 }
+

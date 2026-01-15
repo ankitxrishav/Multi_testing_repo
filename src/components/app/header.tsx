@@ -32,7 +32,6 @@ export function AppHeader() {
       const lastUpdate = userData.lastStreakUpdate;
 
       if (lastUpdate !== today && lastUpdate !== yesterday) {
-        // Streak expired
         updateDoc(doc(firestore, 'users', user.uid), {
           streak: 0
         });
@@ -41,38 +40,45 @@ export function AppHeader() {
   }, [userData, firestore, user]);
 
   return (
-    <header className="fixed top-0 z-40 w-full border-b bg-background/80 backdrop-blur-lg">
-      <div className="container flex h-16 items-center">
-        <Link href="/" className="flex items-center gap-2 mr-6">
-          <Image
-            src="/icon/logo.svg"
-            alt="fenrirstudy logo"
-            width={32}
-            height={32}
-            className="dark:invert dark:brightness-150"
-          />
-          <span className="font-bold hidden sm:inline-block">fenrirstudy</span>
+    <header className="fixed top-0 z-50 w-full glass h-16 border-b border-border/50">
+      <div className="container flex h-full items-center justify-between">
+        <Link href="/" className="flex items-center gap-3 group transition-transform hover:scale-[1.02]">
+          <div className="w-9 h-9 relative flex items-center justify-center bg-gradient-cosmic rounded-lg glow-purple overflow-hidden">
+            <div className="absolute inset-0 bg-white/10 group-hover:bg-white/20 transition-colors" />
+            <span className="text-white font-bold text-2xl font-display relative z-10">F</span>
+          </div>
+          <span className="font-display font-bold text-xl tracking-wider text-gradient hidden sm:inline-block">
+            FENRIR
+          </span>
         </Link>
 
-        <div className="flex flex-1 items-center justify-end space-x-2">
+        <div className="flex items-center gap-4">
           {user && (
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 font-bold text-sm">
-              <Flame className="w-4 h-4 fill-current" />
-              <span>{userData?.streak || 0}</span>
+            <div className="hidden sm:flex items-center gap-2 px-4 py-1.5 rounded-full glass border border-border/50 group animate-pulse-slow">
+              <Flame className="w-4 h-4 text-orange-400 fill-orange-400 group-hover:scale-110 transition-transform" />
+              <span className="font-mono font-bold text-sm text-orange-400">{userData?.streak || 0}d</span>
             </div>
           )}
-          <ThemeToggle />
-          {loading ? (
-            <div className="h-9 w-9 bg-muted rounded-full animate-pulse"></div>
-          ) : user ? (
-            <UserNav />
-          ) : (
-            <Button onClick={() => router.push('/login')} size="sm">
-              Login
-            </Button>
-          )}
+
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            {loading ? (
+              <div className="h-9 w-9 glass rounded-full animate-pulse"></div>
+            ) : user ? (
+              <UserNav />
+            ) : (
+              <Button
+                onClick={() => router.push('/login')}
+                className="bg-gradient-cosmic hover:glow-purple transition-all duration-300 rounded-full px-6 text-white border-0"
+              >
+                Login
+              </Button>
+            )}
+          </div>
         </div>
       </div>
+      <div className="absolute bottom-0 left-0 h-[1px] bg-gradient-to-r from-transparent via-brand-purple to-transparent w-full opacity-50" />
     </header>
   );
 }
+
